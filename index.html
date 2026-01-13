@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Attrape les cœurs ❤️</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: #0b0b14;
+            color: #fff;
+        }
+
+        .wrap {
+            height: 100%;
+            display: grid;
+            place-items: center;
+            padding: 16px;
+        }
+
+        .card {
+            width: min(920px, 100%);
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+            overflow: hidden;
+        }
+
+        header {
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        header .left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        header h1 {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        header p {
+            margin: 0;
+            opacity: .8;
+            font-size: 12px;
+        }
+
+        header .btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        button {
+            border: 1px solid rgba(255, 255, 255, .16);
+            background: rgba(255, 255, 255, .06);
+            color: white;
+            padding: 8px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, .10);
+        }
+
+        button:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        #hud {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        #hud span {
+            opacity: .9;
+        }
+
+        #hud b {
+            opacity: 1;
+        }
+
+        /* Zone jeu */
+        .stage {
+            position: relative;
+        }
+
+        #canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: radial-gradient(circle at 50% 20%, #1c1c35, #0b0b14 60%);
+            touch-action: none;
+        }
+
+        /* Overlays communs */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            text-align: center;
+            padding: 18px 16px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 18px;
+            background: rgba(10, 10, 20, .72);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+            width: min(560px, calc(100% - 32px));
+        }
+
+        .emoji {
+            font-size: 44px;
+            line-height: 1;
+        }
+
+        .title {
+            margin: 10px 0 6px;
+            font-size: 20px;
+        }
+
+        .text {
+            margin: 0 0 14px;
+            opacity: .88;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .hint {
+            margin-top: 10px;
+            opacity: .7;
+            font-size: 12px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        /* Souvenir */
+        .reward-media {
+            width: min(200px, 100%);
+            /* taille max du carré */
+            margin: 10px auto 12px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .04);
+            aspect-ratio: 1 / 1;
+        }
+
+        .reward-media img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .reward-tag {
+            display: inline-block;
+            font-size: 12px;
+            opacity: .85;
+            border: 1px solid rgba(255, 255, 255, .14);
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .06);
+            margin-top: 8px;
+        }
+
+        .tip {
+            padding: 12px 16px 16px;
+            font-size: 12px;
+            opacity: .8;
+            border-top: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, .65);
+            border: 1px solid rgba(255, 255, 255, .16);
+            backdrop-filter: blur(8px);
+            color: white;
+            font-size: 13px;
+            max-width: min(520px, calc(100% - 24px));
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .25s ease, transform .25s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-6px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="card">
+            <header>
+                <div class="left">
+                    <h1>Attrape les cœurs ❤️</h1>
+                    <p>Attrape les cœurs, évite les 💣. (souris ou doigt)</p>
+                </div>
+                <div class="btns">
+                    <button id="btnStart">Démarrer</button>
+                    <button id="btnRestart" disabled>Rejouer</button>
+                </div>
+            </header>
+
+            <div id="hud">
+                <span>Score : <b id="score">0</b></span>
+                <span>Vies : <b id="lives">3</b></span>
+                <span>Niveau : <b id="level">1</b></span>
+                <span>Objectif : <b id="goal">10</b> cœurs</span>
+            </div>
+
+            <div class="stage">
+                <canvas id="canvas" tabindex="0" width="900" height="520" aria-label="Jeu"></canvas>
+
+                <!-- Game Over -->
+                <div id="gameOverScreen" class="overlay" hidden>
+                    <div class="modal" role="dialog" aria-modal="true" aria-label="Jeu fini">
+                        <div class="emoji">💔</div>
+                        <h2 class="title">Jeu fini !</h2>
+                        <p id="finalText" class="text">Score final : 0 — Clique sur “Rejouer” ❤️</p>
+                        <div class="row">
+                            <button id="btnOverlayRestart">Rejouer</button>
+                        </div>
+                        <div class="hint">(Astuce : appuie sur Entrée ou Espace)</div>
+                    </div>
+                </div>
+
+                <!-- Reward / Souvenir -->
+                <div id="rewardScreen" class="overlay" hidden>
+                    <div class="modal" role="dialog" aria-modal="true" aria-label="Souvenir débloqué">
+                        <div class="emoji">🎁</div>
+                        <h2 id="rewardTitle" class="title">Souvenir débloqué !</h2>
+
+                        <div id="rewardMedia" class="reward-media" style="display:none;">
+                            <img id="rewardImg" alt="Souvenir" />
+                        </div>
+
+                        <p id="rewardText" class="text"></p>
+                        <div id="rewardTag" class="reward-tag" style="display:none;"></div>
+
+                        <div class="row">
+                            <button id="btnRewardContinue">Continuer</button>
+                        </div>
+                        <div class="hint">(Tu peux aussi appuyer sur Entrée)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                Astuce : sur mobile, glisse ton doigt. Sur ordi, bouge la souris. 💫
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (() => {
+            // --- Elements
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+
+            const scoreEl = document.getElementById("score");
+            const livesEl = document.getElementById("lives");
+            const levelEl = document.getElementById("level");
+            const goalEl = document.getElementById("goal");
+
+            const btnStart = document.getElementById("btnStart");
+            const btnRestart = document.getElementById("btnRestart");
+            const toastEl = document.getElementById("toast");
+
+            // Game over overlay
+            const gameOverScreen = document.getElementById("gameOverScreen");
+            const finalText = document.getElementById("finalText");
+            const btnOverlayRestart = document.getElementById("btnOverlayRestart");
+
+            // Reward overlay
+            const rewardScreen = document.getElementById("rewardScreen");
+            const rewardTitleEl = document.getElementById("rewardTitle");
+            const rewardTextEl = document.getElementById("rewardText");
+            const rewardTagEl = document.getElementById("rewardTag");
+            const rewardMediaEl = document.getElementById("rewardMedia");
+            const rewardImgEl = document.getElementById("rewardImg");
+            const btnRewardContinue = document.getElementById("btnRewardContinue");
+
+            // --- Helpers
+            const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+            const rand = (a, b) => a + Math.random() * (b - a);
+            const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+
+            function showToast(msg, ms = 2200) {
+                toastEl.textContent = msg;
+                toastEl.classList.add("show");
+                clearTimeout(showToast._t);
+                showToast._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+            }
+
+            function showOverlay(el) {
+                el.hidden = false;
+                el.classList.add("show");
+            }
+
+            function hideOverlay(el) {
+                if (document.activeElement && el.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
+                el.classList.remove("show");
+                el.hidden = true;
+                canvas.focus({ preventScroll: true });
+            }
+
+
+            // --- Game state
+            let running = false;
+            let pausedByReward = false;
+            let lastT = 0;
+
+            const state = {
+                score: 0,
+                lives: 3,
+                level: 1,
+                heartsCaughtThisLevel: 0,
+                goal: 10,
+                spawnTimer: 0,
+                spawnEvery: 0.75, // seconds
+                speedMul: 1,
+                bombChance: 0.18,
+            };
+
+            const player = {
+                x: canvas.width / 2,
+                y: canvas.height * 0.82,
+                r: 26,
+                targetX: canvas.width / 2,
+                targetY: canvas.height * 0.82,
+            };
+
+            const drops = []; // {x,y,vy,r,type,spin,a}
+
+            // --- Rewards
+            const rewards = {
+                2: {
+                    title: "❤️",
+                    text: "T’es mon endroit sûr, même quand il pleut dans ma tête",
+                    img: "cat1.jpg",
+                    tag: "Mon chat"
+                },
+                4: {
+                    title: "💗",
+                    text: "Même les silences sont confortables avec toi.",
+                    img: "cat2.jpg"
+                },
+                6: {
+                    title: "😽",
+                    text: "Nous.",
+                    img: "cat3.jpg",
+                    tag: "us"
+                }
+            };
+
+            // --- Input (mouse + touch)
+            function setTargetFromClient(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (clientX - rect.left) * (canvas.width / rect.width);
+                const y = (clientY - rect.top) * (canvas.height / rect.height);
+
+                player.targetX = clamp(x, player.r, canvas.width - player.r);
+                player.targetY = clamp(y, canvas.height * 0.65, canvas.height - player.r);
+            }
+
+            canvas.addEventListener("mousemove", (e) => setTargetFromClient(e.clientX, e.clientY));
+            canvas.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                setTargetFromClient(t.clientX, t.clientY);
+            }, { passive: false });
+
+            canvas.addEventListener("touchmove", (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                setTargetFromClient(t.clientX, t.clientY);
+            }, { passive: false });
+
+            // --- HUD / Reset
+            function updateHUD() {
+                scoreEl.textContent = state.score;
+                livesEl.textContent = state.lives;
+                levelEl.textContent = state.level;
+                goalEl.textContent = state.goal;
+            }
+
+            function resetGame() {
+                state.score = 0;
+                state.lives = 3;
+                state.level = 1;
+                state.heartsCaughtThisLevel = 0;
+                state.goal = 10;
+                state.spawnTimer = 0;
+                state.spawnEvery = 0.75;
+                state.speedMul = 1;
+                state.bombChance = 0.18;
+
+                drops.length = 0;
+
+                player.x = canvas.width / 2;
+                player.y = canvas.height * 0.82;
+                player.targetX = player.x;
+                player.targetY = player.y;
+
+                running = false;
+                pausedByReward = false;
+
+                hideOverlay(gameOverScreen);
+                hideOverlay(rewardScreen);
+
+                btnStart.disabled = false;
+                btnRestart.disabled = true;
+
+                updateHUD();
+            }
+
+            function startGame() {
+                if (running) return;
+                hideOverlay(gameOverScreen);
+                hideOverlay(rewardScreen);
+
+                running = true;
+                pausedByReward = false;
+                btnStart.disabled = true;
+                btnRestart.disabled = false;
+
+                showToast("Go! Attrape des cœurs ❤️");
+                lastT = performance.now();
+                requestAnimationFrame(loop);
+            }
+
+            function renderFrame(t) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawBackground(t);
+                for (const d of drops) drawDrop(d);
+                drawPlayer();
+            }
+
+            function gameOver() {
+                running = false;
+                pausedByReward = false;
+
+                btnStart.disabled = false;
+                btnRestart.disabled = false;
+
+                finalText.textContent = `Score final : ${state.score} — Clique sur “Rejouer” ❤️`;
+                showOverlay(gameOverScreen);
+                showToast("Jeu fini 💔");
+
+                renderFrame(performance.now());
+            }
+
+            // --- Rewards overlay logic
+            function openReward(levelJustReached) {
+                const r = rewards[levelJustReached];
+                if (!r) return false;
+
+                pausedByReward = true;
+                running = false; // stop the loop cleanly
+
+                rewardTitleEl.textContent = r.title || "Souvenir débloqué !";
+                rewardTextEl.textContent = r.text || "";
+
+                if (r.img) {
+                    rewardImgEl.src = r.img;
+                    rewardMediaEl.style.display = "block";
+                } else {
+                    rewardMediaEl.style.display = "none";
+                }
+
+                if (r.tag) {
+                    rewardTagEl.textContent = r.tag;
+                    rewardTagEl.style.display = "inline-block";
+                } else {
+                    rewardTagEl.style.display = "none";
+                }
+
+                showOverlay(rewardScreen);
+                showToast("🎁 Souvenir débloqué !");
+                renderFrame(performance.now());
+                return true;
+            }
+
+            function closeRewardAndContinue() {
+                hideOverlay(rewardScreen);
+                pausedByReward = false;
+
+                // On reprend le jeu
+                running = true;
+                lastT = performance.now();
+                requestAnimationFrame(loop);
+            }
+
+            // --- Level progression
+            function nextLevel() {
+                state.level++;
+                state.heartsCaughtThisLevel = 0;
+
+                state.goal = Math.round(state.goal * 1.25 + 2);
+                state.spawnEvery = Math.max(0.32, state.spawnEvery * 0.90);
+                state.speedMul *= 1.10;
+                state.bombChance = Math.min(0.35, state.bombChance + 0.02);
+
+                updateHUD();
+
+                // Ouvre un souvenir si défini pour ce niveau
+                const opened = openReward(state.level);
+                if (!opened) {
+                    showToast(`Niveau ${state.level} ✨`);
+                }
+            }
+
+            // --- Buttons
+            btnStart.addEventListener("click", startGame);
+
+            btnRestart.addEventListener("click", () => {
+                resetGame();
+                startGame();
+            });
+
+            btnOverlayRestart.addEventListener("click", () => {
+                resetGame();
+                startGame();
+            });
+
+            btnRewardContinue.addEventListener("click", () => {
+                closeRewardAndContinue();
+            });
+
+            // Overlay click (mobile-friendly)
+            gameOverScreen.addEventListener("click", (e) => {
+                if (e.target && e.target.id === "btnOverlayRestart") return;
+                resetGame();
+                startGame();
+            });
+
+            // Keyboard controls (Enter/Space)
+            window.addEventListener("keydown", (e) => {
+                const isConfirm = (e.key === "Enter" || e.key === " ");
+                if (!isConfirm) return;
+
+                // Si reward ouvert, Enter continue
+                if (rewardScreen.classList.contains("show")) {
+                    e.preventDefault();
+                    closeRewardAndContinue();
+                    return;
+                }
+
+                // Si game over, Enter relance
+                if (!running && !pausedByReward) {
+                    e.preventDefault();
+                    resetGame();
+                    startGame();
+                }
+            });
+
+            // --- Spawn
+            function spawnDrop() {
+                const isBomb = Math.random() < state.bombChance;
+                const r = isBomb ? rand(16, 22) : rand(14, 20);
+
+                drops.push({
+                    x: rand(r, canvas.width - r),
+                    y: -r - 10,
+                    vy: rand(140, 220) * state.speedMul,
+                    r,
+                    type: isBomb ? "bomb" : "heart",
+                    spin: rand(-2.2, 2.2),
+                    a: rand(0, Math.PI * 2),
+                });
+            }
+
+            // --- Drawing
+            function drawBackground(t) {
+                ctx.save();
+                ctx.globalAlpha = 0.9;
+
+                for (let i = 0; i < 70; i++) {
+                    const x = (i * 97) % canvas.width;
+                    const y = (i * 53) % canvas.height;
+                    const tw = 0.35 + 0.35 * Math.sin(t * 0.001 + i);
+                    ctx.globalAlpha = 0.2 + tw * 0.35;
+                    ctx.beginPath();
+                    ctx.arc(x, y, (i % 3) + 0.6, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            function drawHeart(x, y, size, rot) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rot);
+                ctx.scale(size / 18, size / 18);
+                ctx.beginPath();
+
+                ctx.moveTo(0, 6);
+                ctx.bezierCurveTo(0, -4, -14, -4, -14, 6);
+                ctx.bezierCurveTo(-14, 14, -4, 18, 0, 24);
+                ctx.bezierCurveTo(4, 18, 14, 14, 14, 6);
+                ctx.bezierCurveTo(14, -4, 0, -4, 0, 6);
+
+                ctx.closePath();
+                ctx.fillStyle = "rgba(255, 90, 160, 0.95)";
+                ctx.fill();
+                ctx.lineWidth = 1.6;
+                ctx.strokeStyle = "rgba(255,255,255,0.35)";
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawBomb(x, y, r, rot) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rot);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(40,40,55,0.95)";
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "rgba(255,255,255,0.18)";
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(r * 0.2, -r * 0.9);
+                ctx.quadraticCurveTo(r * 0.9, -r * 1.3, r * 0.6, -r * 1.8);
+                ctx.strokeStyle = "rgba(255,255,255,0.22)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(r * 0.65, -r * 1.85, r * 0.18, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255, 200, 90, 0.9)";
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            function drawDrop(d) {
+                const rot = d.a;
+                if (d.type === "heart") {
+                    ctx.save();
+                    ctx.shadowColor = "rgba(255,90,160,0.55)";
+                    ctx.shadowBlur = 12;
+                    drawHeart(d.x, d.y, d.r * 1.6, rot);
+                    ctx.restore();
+                } else {
+                    drawBomb(d.x, d.y, d.r, rot);
+                }
+            }
+
+            function drawPlayer() {
+                ctx.save();
+                ctx.shadowColor = "rgba(255, 140, 200, 0.6)";
+                ctx.shadowBlur = 14;
+
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255,0.12)";
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "rgba(255,255,255,0.22)";
+                ctx.stroke();
+
+                drawHeart(player.x, player.y, 10, 0);
+                ctx.restore();
+            }
+
+            // --- Cute lines
+            const lines = [
+                "Pour toi ❤️",
+                "T’es ma safeplace préférée.",
+                "Encore un ! 😙",
+                "Petit cœur pour grand toi.",
+                "Mon oreiller favori !",
+                "Bonus love ✨",
+            ];
+            function randomSweetLine() {
+                return lines[(Math.random() * lines.length) | 0];
+            }
+
+            // --- Loop
+            function loop(t) {
+                if (!running) return;
+
+                const dt = Math.min(0.033, (t - lastT) / 1000);
+                lastT = t;
+
+                // Smooth follow
+                player.x += (player.targetX - player.x) * (1 - Math.pow(0.001, dt));
+                player.y += (player.targetY - player.y) * (1 - Math.pow(0.001, dt));
+
+                // Spawn
+                state.spawnTimer += dt;
+                while (state.spawnTimer >= state.spawnEvery) {
+                    state.spawnTimer -= state.spawnEvery;
+                    spawnDrop();
+                }
+
+                // Update drops
+                for (let i = drops.length - 1; i >= 0; i--) {
+                    const d = drops[i];
+                    d.y += d.vy * dt;
+                    d.a += d.spin * dt;
+
+                    // Collision
+                    if (dist(d.x, d.y, player.x, player.y) < d.r + player.r * 0.75) {
+                        if (d.type === "heart") {
+                            state.score += 10;
+                            state.heartsCaughtThisLevel += 1;
+                            showToast(randomSweetLine(), 1200);
+
+                            if (state.heartsCaughtThisLevel >= state.goal) {
+                                updateHUD();
+                                drops.splice(i, 1);
+
+                                nextLevel();
+                                renderFrame(t);
+
+                                if (running) requestAnimationFrame(loop);
+                                return;
+                            }
+
+                        } else {
+                            state.lives -= 1;
+                            showToast("Aïe 💥 Perdu une vie !", 1400);
+
+                            if (state.lives <= 0) {
+                                updateHUD();
+                                drops.splice(i, 1);
+                                gameOver();
+                                return;
+                            }
+                        }
+
+                        updateHUD();
+                        drops.splice(i, 1);
+                        continue;
+                    }
+
+                    // Remove offscreen
+                    if (d.y > canvas.height + d.r + 40) {
+                        drops.splice(i, 1);
+                    }
+                }
+
+                // Render
+                renderFrame(t);
+                requestAnimationFrame(loop);
+            }
+
+            // Init
+            resetGame();
+            showToast("Clique sur Démarrer ❤️");
+        })();
+    </script>
+</body>
+
+</html>
