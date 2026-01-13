@@ -289,8 +289,6 @@
                 <!-- Reward / Souvenir -->
                 <div id="rewardScreen" class="overlay" hidden>
                     <div class="modal" role="dialog" aria-modal="true" aria-label="Souvenir débloqué">
-                        <h2 id="rewardTitle" class="title">Souvenir débloqué !</h2>
-
                         <div id="rewardMedia" class="reward-media" style="display:none;">
                             <img id="rewardImg" alt="Souvenir" />
                         </div>
@@ -520,7 +518,6 @@
                 pausedByReward = true;
                 running = false; // stop the loop cleanly
 
-                rewardTitleEl.textContent = r.title || "Souvenir débloqué !";
                 rewardTextEl.textContent = r.text || "";
 
                 if (r.img) {
@@ -538,7 +535,7 @@
                 }
 
                 showOverlay(rewardScreen);
-                showToast("Souvenir débloqué !");
+                showToast("Niveau débloqué !");
                 renderFrame(performance.now());
                 return true;
             }
