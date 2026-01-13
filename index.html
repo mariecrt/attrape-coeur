@@ -143,6 +143,8 @@
             background: rgba(10, 10, 20, .72);
             box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
             width: min(560px, calc(100% - 32px));
+            max-height: 85vh;
+            overflow-y: auto;
         }
 
         .emoji {
@@ -180,13 +182,18 @@
         /* Souvenir */
         .reward-media {
             width: min(200px, 100%);
-            /* taille max du carré */
             margin: 10px auto 12px;
             border-radius: 14px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, .14);
             background: rgba(255, 255, 255, .04);
             aspect-ratio: 1 / 1;
+        }
+
+        @media (max-width: 480px) {
+            .reward-media {
+                width: 125px;
+            }
         }
 
         .reward-media img {
